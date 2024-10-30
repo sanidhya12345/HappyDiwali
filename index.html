@@ -20,14 +20,28 @@
         }
         #canvas {
             display: block;
+            width: 100vw;  /* Ensure full width */
+            height: 100vh; /* Ensure full height */
         }
         #message {
             position: absolute;
-            font-size: 5vw; /* Larger font size */
+            font-size: 5vw; /* Responsive font size */
             font-weight: bold;
             color: white;
             text-shadow: 3px 3px 10px orange;
             text-align: center;
+        }
+
+        /* Optional: Media queries for better font size adjustment */
+        @media (max-width: 600px) {
+            #message {
+                font-size: 8vw; /* Larger font size on small screens */
+            }
+        }
+        @media (min-width: 601px) and (max-width: 1200px) {
+            #message {
+                font-size: 6vw; /* Medium font size on medium screens */
+            }
         }
     </style>
 </head>
@@ -38,35 +52,32 @@
     <script>
         const canvas = document.getElementById('canvas');
         const ctx = canvas.getContext('2d');
-        canvas.width = window.innerWidth;
-        canvas.height = window.innerHeight;
+        function resizeCanvas() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        }
+        resizeCanvas();
 
-        function drawRangoli(x, y, radius) {
-            const colors = ['cyan', 'pink', 'lime', 'orange', 'purple', 'yellow', 'blue', 'red'];
-            const layers = 10; 
-            const petalCount = 12;
-
-            for (let i = 0; i < layers; i++) {
-                const layerRadius = radius - i * 10; 
-                const color = colors[i % colors.length];
-                
-                ctx.fillStyle = color;
-                ctx.beginPath();
-                for (let j = 0; j < petalCount; j++) {
-                    const angle = (j * 2 * Math.PI) / petalCount;
-                    const xOffset = Math.cos(angle) * layerRadius;
-                    const yOffset = Math.sin(angle) * layerRadius;
-
-                    ctx.moveTo(x + xOffset, y + yOffset);
-                    ctx.arc(x, y, layerRadius, angle, angle + Math.PI / petalCount, false);
-                }
-                ctx.fill();
-            }
-
-            ctx.fillStyle = 'gold';
+        function drawDiya(x, y) {
+            // Draw diya base
+            ctx.fillStyle = '#6B4F3A'; // Brown color for the diya
             ctx.beginPath();
-            ctx.arc(x, y, radius * 0.1, 0, Math.PI * 2);
+            ctx.moveTo(x, y);
+            ctx.bezierCurveTo(x - 30, y + 20, x - 30, y + 50, x, y + 50);
+            ctx.bezierCurveTo(x + 30, y + 50, x + 30, y + 20, x, y);
             ctx.fill();
+
+            // Draw diya flame with flickering effect
+            const flickerSize = Math.random() * 10 + 10; // Random size for flickering effect
+            const flickerAlpha = Math.random() * 0.5 + 0.5; // Random opacity for flickering effect
+            ctx.fillStyle = 'orange'; // Flame color
+            ctx.globalAlpha = flickerAlpha; // Set alpha for flickering effect
+            ctx.beginPath();
+            ctx.moveTo(x, y - 10); // Base of the flame
+            ctx.quadraticCurveTo(x - flickerSize, y - 40, x, y - 30); // Left side of the flame
+            ctx.quadraticCurveTo(x + flickerSize, y - 40, x, y - 10); // Right side of the flame
+            ctx.fill();
+            ctx.globalAlpha = 1; // Reset alpha for other drawings
         }
 
         const lights = [];
@@ -99,150 +110,7 @@
             ctx.globalAlpha = 1; 
         }
 
-        class Rocket {
-            constructor(x, y, color) {
-                this.x = x;
-                this.y = y;
-                this.color = color;
-                this.radius = 5;
-                this.exploded = false;
-                this.particles = [];
-            }
-
-            launch() {
-                this.y -= 10;
-                this.drawRocket();
-                if (this.y < canvas.height / 2) {
-                    this.explode();
-                }
-            }
-
-            drawRocket() {
-                ctx.fillStyle = this.color;
-                ctx.beginPath();
-                ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
-                ctx.fill();
-            }
-
-            explode() {
-                this.exploded = true;
-                const colors = ['red', 'yellow', 'orange', 'purple', 'blue', 'lime'];
-                for (let i = 0; i < 100; i++) {
-                    const angle = (Math.PI * 2) * (i / 100);
-                    const speed = Math.random() * 4 + 2;
-                    this.particles.push(new Particle(this.x, this.y, angle, speed, colors[i % colors.length]));
-                }
-            }
-
-            drawParticles() {
-                this.particles.forEach((particle, index) => {
-                    particle.update();
-                    particle.draw();
-                    if (particle.alpha <= 0) this.particles.splice(index, 1);
-                });
-            }
-        }
-
-        class Particle {
-            constructor(x, y, angle, speed, color) {
-                this.x = x;
-                this.y = y;
-                this.angle = angle;
-                this.speed = speed;
-                this.color = color;
-                this.alpha = 1;
-                this.gravity = 0.05;
-            }
-
-            update() {
-                this.x += Math.cos(this.angle) * this.speed;
-                this.y += Math.sin(this.angle) * this.speed + this.gravity;
-                this.speed *= 0.95;
-                this.alpha -= 0.01;
-            }
-
-            draw() {
-                ctx.save();
-                ctx.globalAlpha = this.alpha;
-                ctx.fillStyle = this.color;
-                ctx.beginPath();
-                ctx.arc(this.x, this.y, 3, 0, Math.PI * 2);
-                ctx.fill();
-                ctx.restore();
-            }
-        }
-
-        class Anaar {
-            constructor(x, y) {
-                this.x = x;
-                this.y = y;
-                this.particles = [];
-                this.exploded = false;
-            }
-
-            explode() {
-                this.exploded = true;
-                const colors = ['red', 'orange', 'yellow', 'blue', 'green'];
-                for (let i = 0; i < 200; i++) {
-                    const angle = Math.random() * 2 * Math.PI;
-                    const speed = Math.random() * 3 + 2;
-                    this.particles.push(new Particle(this.x, this.y, angle, speed, colors[i % colors.length]));
-                }
-            }
-
-            draw() {
-                ctx.fillStyle = 'brown';
-                ctx.beginPath();
-                ctx.rect(this.x - 10, this.y, 20, 30); // Anaar pot shape
-                ctx.fill();
-            }
-
-            drawParticles() {
-                this.particles.forEach((particle, index) => {
-                    particle.update();
-                    particle.draw();
-                    if (particle.alpha <= 0) this.particles.splice(index, 1);
-                });
-            }
-        }
-
-        class Fuljhadi {
-            constructor(x, y) {
-                this.x = x;
-                this.y = y;
-                this.particles = [];
-                this.active = true;
-            }
-
-            draw() {
-                ctx.fillStyle = 'gold';
-                ctx.beginPath();
-                ctx.moveTo(this.x, this.y);
-                ctx.lineTo(this.x, this.y - 30); // Sparklers shape
-                ctx.stroke();
-            }
-
-            emit() {
-                if (this.active) {
-                    const angle = Math.random() * 2 * Math.PI;
-                    const speed = Math.random() * 3 + 2;
-                    this.particles.push(new Particle(this.x, this.y, angle, speed, 'gold'));
-                    if (Math.random() < 0.05) this.active = false; // Randomly stop emitting
-                }
-            }
-
-            drawParticles() {
-                this.particles.forEach((particle, index) => {
-                    particle.update();
-                    particle.draw();
-                    if (particle.alpha <= 0) this.particles.splice(index, 1);
-                });
-            }
-        }
-
         const rockets = [];
-        const anaar = [];
-        const fuljhadi = [];
         let rocketCooldown = 0;
 
         function animate() {
@@ -250,19 +118,13 @@
             ctx.fillRect(0, 0, canvas.width, canvas.height);
 
             drawLights();
-            drawRangoli(canvas.width / 2, canvas.height / 2, 150); // Larger rangoli
+            drawDiya(canvas.width / 2, canvas.height / 2); // Draw diya in the center
 
-            // Increased number of rockets
             if (rocketCooldown <= 0) {
-                const rocketCount = 5; // Adjust this number for more rockets
-                const rocketColors = ['white', 'red', 'blue', 'green', 'purple'];
-                for (let i = 0; i < rocketCount; i++) {
-                    const color = rocketColors[Math.floor(Math.random() * rocketColors.length)];
-                    rockets.push(new Rocket(Math.random() * canvas.width, canvas.height, color));
-                }
-                rocketCooldown = 100;
+                rockets.push(new Rocket(Math.random() * canvas.width, canvas.height - 20, 'white'));
+                rocketCooldown = 20; 
             } else {
-                rocketCooldown -= 1;
+                rocketCooldown--;
             }
 
             rockets.forEach((rocket, index) => {
@@ -274,46 +136,13 @@
                 }
             });
 
-            // Add Anaar at the bottom center
-            if (Math.random() < 0.02) {
-                const newAnaar = new Anaar(canvas.width / 2, canvas.height - 30);
-                anaar.push(newAnaar);
-            }
-
-            // Draw Anaar
-            anaar.forEach((a, index) => {
-                a.draw();
-                if (a.exploded) {
-                    a.drawParticles();
-                    if (a.particles.length === 0) anaar.splice(index, 1);
-                } else {
-                    a.explode(); 
-                }
-            });
-
-            // Add Fuljhadi (sparklers)
-            if (fuljhadi.length < 5) {
-                fuljhadi.push(new Fuljhadi(Math.random() * canvas.width, canvas.height - 30));
-            }
-
-            // Draw Fuljhadi
-            fuljhadi.forEach((f) => {
-                f.draw();
-                f.emit();
-                f.drawParticles();
-            });
-
             requestAnimationFrame(animate);
         }
 
         createLights();
         animate();
 
-        window.addEventListener('resize', () => {
-            canvas.width = window.innerWidth;
-            canvas.height = window.innerHeight;
-            createLights();
-        });
+        window.addEventListener('resize', resizeCanvas);
     </script>
 </body>
 </html>
